@@ -15,7 +15,7 @@ import static com.hazelcast.util.ExceptionUtil.rethrow;
 
 public final class DarknetSource {
     public static StreamSource<String> fromJsonStream(String host, int port) {
-        return SourceBuilder.timestampedStream("foo", context -> new Context(host, port))
+        return SourceBuilder.timestampedStream("darknet-source", context -> new Context(host, port))
                 .fillBufferFn(Context::fill)
                 .destroyFn(Context::destroy)
                 .build();
