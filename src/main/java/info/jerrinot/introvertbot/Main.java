@@ -6,18 +6,16 @@ import com.hazelcast.jet.pipeline.Pipeline;
 import com.hazelcast.jet.pipeline.Sinks;
 import info.jerrinot.introvertbot.source.DarknetSource;
 
-import static com.hazelcast.util.ExceptionUtil.rethrow;
-
 public class Main {
-    private static final String HOST = "192.168.1.229";
+    private static final String HOST = "10.0.0.61";
     private static final int PORT = 8090;
-
 
     public static void main(String[] args) {
         Pipeline pipeline = Pipeline.create();
         pipeline.drawFrom(DarknetSource.fromJsonStream(HOST, PORT))
                 .withNativeTimestamps(0)
                 .mapStateful(JsonParser::new, JsonParser::feed)
+                .map(e -> e.getObjects().stream().filter(o -> o.getName().equals("person")).count())
                 .drainTo(Sinks.logger());
 
         JetInstance jet = Jet.newJetInstance();
