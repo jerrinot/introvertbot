@@ -15,8 +15,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.concurrent.TimeUnit;
 
-import static com.hazelcast.util.ExceptionUtil.rethrow;
-
 public final class DarknetSource {
     public static final String RESET_STRING = "-------------------------- TOTALLY NOT JSON --------------- RESET";
 
@@ -35,64 +33,38 @@ public final class DarknetSource {
     private static final class Context {
         private static final long RETRY_DELAY_NANOS = TimeUnit.SECONDS.toNanos(1);
         private final URL url;
-        private HttpURLConnection conn;
         private BufferedReader reader;
         private long errorTimestamp;
-        private long retryCounter;
 
-        public Context(String host, int port) throws IOException {
-            this.url = toURL(host, port);
-            initialize();
+        public Context(String host, int port) throws MalformedURLException {
+            this.url = new URL("http://" + host + ":" + port);
         }
 
-        private void initialize() throws IOException {
-            this.conn = createConnection(url);
-            this.reader = newReader(conn);
-        }
-
-        private BufferedReader newReader(HttpURLConnection conn) throws IOException {
-            BufferedReader reader;
+        private BufferedReader reconnect() throws IOException {
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             InputStream inputStream = conn.getInputStream();
-            reader = new BufferedReader(new InputStreamReader(inputStream));
-            return reader;
+            return new BufferedReader(new InputStreamReader(inputStream));
         }
-
-        private HttpURLConnection createConnection(URL url) throws IOException {
-            HttpURLConnection conn;
-                conn = (HttpURLConnection) url.openConnection();
-            return conn;
-        }
-
-        private static URL toURL(String host, int port) {
-            try {
-                return new URL("http://" + host + ":" + port);
-            } catch (MalformedURLException e) {
-                throw rethrow(e);
-            }
-        }
-
 
         void fill(SourceBuilder.TimestampedSourceBuffer<String> buffer) {
             try {
-                if (errorTimestamp != 0) {
-                    if (errorTimestamp + RETRY_DELAY_NANOS > System.nanoTime()) {
-                        initialize();
-                        retryCounter = 0;
-                        errorTimestamp = 0;
-                        buffer.add(RESET_STRING);
+                if (reader == null) {
+                    if (errorTimestamp == 0 || errorTimestamp + RETRY_DELAY_NANOS > System.nanoTime()) {
+                        reader = reconnect();
                     } else {
                         return;
                     }
+                    buffer.add(RESET_STRING);
                 }
+
                 buffer.add(reader.readLine());
             } catch (IOException e) {
                 errorTimestamp = System.nanoTime();
-                retryCounter++;
             }
         }
 
-        void destroy() {
-            conn.disconnect();
+        void destroy() throws IOException {
+            reader.close();
         }
     }
 }
