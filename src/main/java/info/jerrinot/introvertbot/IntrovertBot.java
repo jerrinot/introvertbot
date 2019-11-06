@@ -9,6 +9,7 @@ import info.jerrinot.introvertbot.source.DarknetSource;
 import static com.hazelcast.jet.aggregate.AggregateOperations.averagingLong;
 import static com.hazelcast.jet.pipeline.Sinks.logger;
 import static com.hazelcast.jet.pipeline.WindowDefinition.sliding;
+import static info.jerrinot.introvertbot.source.DarknetSource.json2Frame;
 
 public class IntrovertBot {
     private static final String HOST = "10.0.0.61";
@@ -18,8 +19,8 @@ public class IntrovertBot {
         Pipeline pipeline = Pipeline.create();
         pipeline.drawFrom(DarknetSource.fromJsonStream(HOST, PORT))
                 .withNativeTimestamps(0)
-                .mapStateful(JsonParser::new, JsonParser::feed)
-                .map(Utils::countPersons)
+                .apply(json2Frame())
+                .map(e -> Utils.countObjectClass(e, "chair"))
                 .window(sliding(10_000, 1_000))
                 .aggregate(averagingLong(e -> e))
                 .map(WindowResult::result)

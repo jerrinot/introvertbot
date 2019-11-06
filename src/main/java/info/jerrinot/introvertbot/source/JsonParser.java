@@ -1,13 +1,14 @@
-package info.jerrinot.introvertbot;
+package info.jerrinot.introvertbot.source;
 
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
-import info.jerrinot.introvertbot.source.DarknetSource;
+import info.jerrinot.introvertbot.DetectedObject;
+import info.jerrinot.introvertbot.Frame;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class JsonParser {
+final class JsonParser {
     public enum State {
         INITIALIZED,
         ARRAY_OPENED,
@@ -21,7 +22,7 @@ public final class JsonParser {
     private int frameId;
     private List<DetectedObject> detectedObjects;
 
-    public Frame feed(String item) {
+    Frame feed(String item) {
         if (DarknetSource.RESET_STRING.equals(item)) {
             currentState = State.INITIALIZED;
             return null;
@@ -69,6 +70,9 @@ public final class JsonParser {
                     detectedObjects.add(detectedObject);
                 } else if ("]".equals(item)) {
                     currentState = State.OBJECTS_RECEIVED;
+                } else if ("".equals(item)) {
+                    // no object has been detected
+                    assert detectedObjects.isEmpty();
                 } else {
                     unknownState(item);
                 }

@@ -1,7 +1,10 @@
 package info.jerrinot.introvertbot.source;
 
+import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
+import com.hazelcast.jet.pipeline.StreamStage;
+import info.jerrinot.introvertbot.Frame;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,6 +25,11 @@ public final class DarknetSource {
                 .fillBufferFn(Context::fill)
                 .destroyFn(Context::destroy)
                 .build();
+    }
+
+
+    public static FunctionEx<StreamStage<String>, StreamStage<Frame>> json2Frame() {
+        return e -> e.mapStateful(JsonParser::new, JsonParser::feed);
     }
 
     private static final class Context {
