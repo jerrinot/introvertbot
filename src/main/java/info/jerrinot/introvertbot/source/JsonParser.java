@@ -44,7 +44,8 @@ final class JsonParser {
                     frameId = Integer.parseInt(frameIdString);
                     currentState = State.FRAME_PARSED;
                 } else if ("{".equals(item)) {
-                    //expected
+                    // expected
+                    // todo: should be probably extracted into its own state
                 } else {
                     unknownState(item);
                 }
