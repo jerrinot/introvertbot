@@ -1,17 +1,18 @@
 package info.jerrinot.introvertbot;
 
 import com.hazelcast.jet.function.FunctionEx;
+import com.hazelcast.jet.pipeline.StreamStage;
 
 public final class Utils {
     private Utils() {
 
     }
 
-    public static Long countPersons(Frame e) {
-        return countObjectClass(e, "person");
+    public static FunctionEx<StreamStage<Frame>, StreamStage<Long>> countObjects(String objectClass) {
+        return s -> s.map(f -> countObjectClass(f, objectClass));
     }
 
-    public static Long countObjectClass(Frame e, String className) {
+    private static Long countObjectClass(Frame e, String className) {
         return e.getObjects().stream().filter(o -> o.getName().equals(className)).count();
     }
 }

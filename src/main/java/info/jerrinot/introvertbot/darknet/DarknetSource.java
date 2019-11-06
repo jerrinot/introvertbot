@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.source;
+package info.jerrinot.introvertbot.darknet;
 
 import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.pipeline.SourceBuilder;
@@ -20,7 +20,7 @@ import static com.hazelcast.util.ExceptionUtil.rethrow;
 public final class DarknetSource {
     public static final String RESET_STRING = "-------------------------- TOTALLY NOT JSON --------------- RESET";
 
-    public static StreamSource<String> fromJsonStream(String host, int port) {
+    public static StreamSource<String> readJsonStream(String host, int port) {
         return SourceBuilder.timestampedStream("darknet-source", context -> new Context(host, port))
                 .fillBufferFn(Context::fill)
                 .destroyFn(Context::destroy)

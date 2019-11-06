@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.source;
+package info.jerrinot.introvertbot.darknet;
 
 import info.jerrinot.introvertbot.DetectedObject;
 import info.jerrinot.introvertbot.Frame;

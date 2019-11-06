@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.source;
+package info.jerrinot.introvertbot.darknet;
 
 import com.hazelcast.internal.json.Json;
 import com.hazelcast.internal.json.JsonObject;
