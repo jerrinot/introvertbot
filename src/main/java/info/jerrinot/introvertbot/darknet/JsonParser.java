@@ -23,7 +23,7 @@ final class JsonParser {
     private List<DetectedObject> detectedObjects;
 
     Frame feed(String item) {
-        if (DarknetSource.RESET_STRING.equals(item)) {
+        if (DarknetSource.HELLO_MESSAGE.equals(item)) {
             currentState = State.INITIALIZED;
             return null;
         }

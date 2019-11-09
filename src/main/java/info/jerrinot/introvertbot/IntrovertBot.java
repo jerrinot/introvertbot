@@ -21,7 +21,7 @@ public class IntrovertBot {
         pipeline.drawFrom(DarknetSource.readJsonStream(HOST, PORT))
                 .withNativeTimestamps(0)
                 .apply(json2Frame())
-                .apply(countObjects("chair"))
+                .apply(countObjects("person"))
                 .window(sliding(10_000, 1_000))
                 .aggregate(averagingLong(e -> e))
                 .map(WindowResult::result)
