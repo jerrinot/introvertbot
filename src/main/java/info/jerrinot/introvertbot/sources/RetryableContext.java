@@ -8,8 +8,10 @@ import com.hazelcast.jet.function.TriFunction;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
+import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -26,6 +28,7 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
     private final TriFunction<? super INNER_CONTEXT_TYPE, Throwable, Long, ErrorOutcome> errorFn;
     private long lastErrorAtNanos;
     private long firstErrorAtNanos;
+    private List<Object> storedSnapshot;
 
     public RetryableContext(Processor.Context processorContext,
                             FunctionEx<? super Processor.Context, ? extends INNER_CONTEXT_TYPE> createFn,
@@ -53,8 +56,12 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
             }
             if (innerContext == null) {
                 innerContext = createFn.apply(processorContext);
+                if (storedSnapshot != null) {
+                    restoreSnapshotFn.accept(innerContext, storedSnapshot);
+                }
             }
             innerFillBufferFn.accept(innerContext, buffer);
+            storedSnapshot = null;
             lastErrorAtNanos = 0;
             firstErrorAtNanos = 0;
         } catch (Throwable e) {
@@ -67,6 +74,10 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
                 case PROPAGATE_ERROR:
                     throw e;
                 case RECREATE_CONTEXT:
+                    SNAPSHOT_TYPE singleSnapshotItem = createSnapshotFn.apply(innerContext);
+                    if (singleSnapshotItem != null) {
+                        storedSnapshot = singletonList(singleSnapshotItem);
+                    }
                     innerContext = null;
                     // intentional fall-through
                 case BACKOFF:
@@ -79,15 +90,25 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
     }
 
     public void destroy() {
-        innerDestroyFn.accept(innerContext);
+        if (innerContext != null) {
+            innerDestroyFn.accept(innerContext);
+        }
+        storedSnapshot = null;
     }
 
     public Object createSnapshot() {
+        if (innerContext == null) {
+            return storedSnapshot;
+        }
         return createSnapshotFn.apply(innerContext);
     }
 
     public void restoreSnapshot(List<Object> objects) {
-        restoreSnapshotFn.accept(innerContext, objects);
+        if (innerContext == null) {
+            storedSnapshot = objects;
+        } else {
+            restoreSnapshotFn.accept(innerContext, objects);
+        }
     }
 
 }

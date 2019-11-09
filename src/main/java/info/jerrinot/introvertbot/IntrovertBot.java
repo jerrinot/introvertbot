@@ -2,9 +2,12 @@ package info.jerrinot.introvertbot;
 
 import com.hazelcast.jet.Jet;
 import com.hazelcast.jet.JetInstance;
+import com.hazelcast.jet.Job;
 import com.hazelcast.jet.datamodel.WindowResult;
 import com.hazelcast.jet.pipeline.Pipeline;
 import info.jerrinot.introvertbot.darknet.DarknetSource;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.jet.aggregate.AggregateOperations.averagingLong;
 import static com.hazelcast.jet.pipeline.Sinks.logger;
@@ -16,7 +19,7 @@ public class IntrovertBot {
     private static final String HOST = "10.0.0.61";
     private static final int PORT = 8090;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Pipeline pipeline = Pipeline.create();
         pipeline.drawFrom(DarknetSource.readJsonStream(HOST, PORT))
                 .withNativeTimestamps(0)
@@ -28,7 +31,12 @@ public class IntrovertBot {
                 .map(Math::round)
                 .drainTo(logger());
 
-        JetInstance jet = Jet.newJetInstance();
-        jet.newJob(pipeline).join();
+        JetInstance jet1 = Jet.newJetInstance();
+        Job job = jet1.newJob(pipeline);
+        TimeUnit.SECONDS.sleep(10);
+        JetInstance jet2 = Jet.newJetInstance();
+        jet1.shutdown();
+
+        job.join();
     }
 }
