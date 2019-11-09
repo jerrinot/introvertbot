@@ -8,7 +8,6 @@ import com.hazelcast.jet.function.TriFunction;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -16,8 +15,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE> implements Serializable {
-    private static final long BACKOFF_NANOS = MILLISECONDS.toNanos(100);
-
     private INNER_CONTEXT_TYPE innerContext;
     private final BiConsumerEx<? super INNER_CONTEXT_TYPE, ? super SourceBuilder.TimestampedSourceBuffer<ITEM_TYPE>> innerFillBufferFn;
     private final ConsumerEx<? super INNER_CONTEXT_TYPE> innerDestroyFn;
@@ -26,8 +23,7 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
     private final Processor.Context processorContext;
     private final FunctionEx<? super Processor.Context, ? extends INNER_CONTEXT_TYPE> createFn;
     private final TriFunction<? super INNER_CONTEXT_TYPE, Throwable, Long, ErrorOutcome> errorFn;
-    private long lastErrorAtNanos;
-    private long firstErrorAtNanos;
+    private final ErrorTracker errorTracker;
     private List<Object> storedSnapshot;
 
     public RetryableContext(Processor.Context processorContext,
@@ -44,16 +40,15 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
         this.processorContext = processorContext;
         this.createFn = createFn;
         this.errorFn = errorFn;
+        this.errorTracker = new ErrorTracker();
     }
 
     public <T extends SourceBuilder.TimestampedSourceBuffer<ITEM_TYPE>> void fill(T buffer) {
         long now = System.nanoTime();
+        if (errorTracker.shouldBackoff(now)) {
+            return;
+        }
         try {
-            if (lastErrorAtNanos != 0) {
-                if (now < lastErrorAtNanos + BACKOFF_NANOS) {
-                    return;
-                }
-            }
             if (innerContext == null) {
                 innerContext = createFn.apply(processorContext);
                 if (storedSnapshot != null) {
@@ -62,30 +57,33 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
             }
             innerFillBufferFn.accept(innerContext, buffer);
             storedSnapshot = null;
-            lastErrorAtNanos = 0;
-            firstErrorAtNanos = 0;
+            errorTracker.onRecovery();
         } catch (Throwable e) {
-            if (firstErrorAtNanos == 0) {
-                firstErrorAtNanos = now;
-            }
-            long errorDurationMillis = NANOSECONDS.toMillis(now - firstErrorAtNanos);
+            long errorDurationMillis = NANOSECONDS.toMillis(errorTracker.getErrorDurationNanos(now));
             ErrorOutcome outcome = errorFn.apply(innerContext, e, errorDurationMillis);
             switch (outcome) {
                 case PROPAGATE_ERROR:
                     throw e;
                 case RECREATE_CONTEXT:
-                    SNAPSHOT_TYPE singleSnapshotItem = createSnapshotFn.apply(innerContext);
-                    if (singleSnapshotItem != null) {
-                        storedSnapshot = singletonList(singleSnapshotItem);
-                    }
+                    saveSnapshot();
                     innerContext = null;
                     // intentional fall-through
                 case BACKOFF:
-                    lastErrorAtNanos = System.nanoTime();
+                    errorTracker.onError(now);
                     break;
                 default:
                     throw new IllegalStateException("Unknown outcome: " + outcome);
             }
+        }
+    }
+
+    private void saveSnapshot() {
+        SNAPSHOT_TYPE singleSnapshotItem = null;
+        if (innerContext != null) {
+            singleSnapshotItem = createSnapshotFn.apply(innerContext);
+        }
+        if (singleSnapshotItem != null) {
+            storedSnapshot = singletonList(singleSnapshotItem);
         }
     }
 
