@@ -32,7 +32,7 @@ public final class ErrorHandlers {
         };
     }
 
-    public static PredicateEx<Throwable> allow(Class<? extends Throwable> allowedType) {
+    public static PredicateEx<Throwable> allowOnly(Class<? extends Throwable> allowedType) {
         return allowedType::isInstance;
     }
 }

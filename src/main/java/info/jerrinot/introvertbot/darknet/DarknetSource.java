@@ -7,11 +7,11 @@ import info.jerrinot.introvertbot.Frame;
 import info.jerrinot.introvertbot.sources.RetryableSourceBuilder;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
-import static info.jerrinot.introvertbot.sources.ErrorHandlers.allow;
+import static info.jerrinot.introvertbot.sources.ErrorHandlers.allowOnly;
 import static info.jerrinot.introvertbot.sources.ErrorHandlers.timeoutAndFilter;
 import static info.jerrinot.introvertbot.sources.ErrorOutcome.RECREATE_CONTEXT;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public final class DarknetSource {
     public static final String HELLO_MESSAGE = "-------------------------- TOTALLY NOT JSON --------------- EHLO";
@@ -21,7 +21,7 @@ public final class DarknetSource {
         return RetryableSourceBuilder.timestampedStream(srcName, context -> new SourceContext(host, port))
                 .fillBufferFn(SourceContext::fill)
                 .destroyFn(SourceContext::destroy)
-                .errorFn(timeoutAndFilter(RECREATE_CONTEXT, 1, TimeUnit.MINUTES, allow(IOException.class)))
+                .errorFn(timeoutAndFilter(RECREATE_CONTEXT, 1, MINUTES, allowOnly(IOException.class)))
                 .build();
     }
 
