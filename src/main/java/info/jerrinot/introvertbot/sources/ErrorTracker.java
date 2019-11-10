@@ -1,20 +1,27 @@
 package info.jerrinot.introvertbot.sources;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.lang.Math.min;
 
 public final class ErrorTracker {
-    private static final long BACKOFF_NANOS = MILLISECONDS.toNanos(100);
+    private static final long MAX_SHIFT = 12;
 
     private long lastErrorTimestamp;
     private long firstErrorTimestamp;
+    private long errorCounter;
+
 
     public boolean shouldBackoff(long now) {
-        return lastErrorTimestamp != 0 && now < lastErrorTimestamp + BACKOFF_NANOS;
+        if (errorCounter == 0) {
+            return false;
+        }
+        int backoffNanos = 1 << (min(errorCounter, MAX_SHIFT));
+        return now < lastErrorTimestamp + backoffNanos;
     }
 
     public void onSuccess() {
         lastErrorTimestamp = 0;
         firstErrorTimestamp = 0;
+        errorCounter = 0;
     }
 
     public void onError(long now) {
@@ -22,6 +29,7 @@ public final class ErrorTracker {
         if (firstErrorTimestamp == 0) {
             firstErrorTimestamp = now;
         }
+        errorCounter++;
     }
 
     public long getErrorDurationNanos(long now) {
