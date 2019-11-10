@@ -33,9 +33,9 @@ public class IntrovertBot {
 
         JetInstance jet1 = Jet.newJetInstance();
         Job job = jet1.newJob(pipeline);
-        TimeUnit.SECONDS.sleep(10);
-        JetInstance jet2 = Jet.newJetInstance();
-        jet1.shutdown();
+//        TimeUnit.SECONDS.sleep(10);
+//        JetInstance jet2 = Jet.newJetInstance();
+//        jet1.shutdown();
 
         job.join();
     }

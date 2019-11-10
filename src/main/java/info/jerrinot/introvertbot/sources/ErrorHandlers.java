@@ -1,12 +1,17 @@
 package info.jerrinot.introvertbot.sources;
 
+import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.function.PredicateEx;
+import com.hazelcast.jet.function.SupplierEx;
 import com.hazelcast.jet.function.TriFunction;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.hazelcast.jet.function.PredicateEx.alwaysTrue;
+import static info.jerrinot.introvertbot.sources.ErrorOutcome.PROPAGATE_ERROR;
+
 public final class ErrorHandlers {
-    private static final TriFunction<?, Throwable, Long, ErrorOutcome> ALWAYS_PROPAGATE = (c, t, l) -> ErrorOutcome.PROPAGATE_ERROR;
+    private static final TriFunction<?, Throwable, Long, ErrorOutcome> ALWAYS_PROPAGATE = (c, t, l) -> PROPAGATE_ERROR;
 
     private ErrorHandlers() {
 
@@ -16,19 +21,24 @@ public final class ErrorHandlers {
         return ALWAYS_PROPAGATE;
     }
 
-    public static TriFunction<?, Throwable, Long, ErrorOutcome> timeout(ErrorOutcome outcome, long timeout, TimeUnit timeUnit) {
-        long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
-        return (c, t, l) -> System.nanoTime() < deadline ? outcome : ErrorOutcome.PROPAGATE_ERROR;
+    public static TriFunction<?, Throwable, Long, ErrorOutcome> fixedTimeout(ErrorOutcome outcome, long timeout, TimeUnit timeUnit) {
+        return fixedTimeoutAndFilter(outcome, timeout, timeUnit, alwaysTrue());
     }
 
-    public static <T> TriFunction<T, Throwable, Long, ErrorOutcome> timeoutAndFilter(ErrorOutcome outcome,
-                                                                                     long timeout, TimeUnit timeUnit, PredicateEx<Throwable> predicate) {
-        long deadline = System.nanoTime() + timeUnit.toNanos(timeout);
+    public static <T> TriFunction<T, Throwable, Long, ErrorOutcome> fixedTimeoutAndFilter(ErrorOutcome outcome,
+                                                                                          long timeout, TimeUnit timeUnit, PredicateEx<Throwable> predicate) {
         return (c, t, l) -> {
-            if (predicate.test(t) && System.nanoTime() < deadline) {
+            if (predicate.test(t) && l < timeUnit.toMillis(timeout)) {
                 return outcome;
             }
-            return ErrorOutcome.PROPAGATE_ERROR;
+            return PROPAGATE_ERROR;
+        };
+    }
+
+    public static <T> TriFunction<T, Throwable, Long, ErrorOutcome> configuredTimeout(ErrorOutcome outcome, FunctionEx<T, Long> foo) {
+        return (c, t, l) -> {
+            Long timeout = foo.apply(c);
+            return l < timeout ? outcome : PROPAGATE_ERROR;
         };
     }
 

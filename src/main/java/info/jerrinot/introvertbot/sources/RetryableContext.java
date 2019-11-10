@@ -53,6 +53,7 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
             storedSnapshot = null;
             errorTracker.onSuccess();
         } catch (Throwable e) {
+            errorTracker.onError(now);
             long errorDurationMillis = NANOSECONDS.toMillis(errorTracker.getErrorDurationNanos(now));
             ErrorOutcome outcome = errorFn.apply(innerContext, e, errorDurationMillis);
             switch (outcome) {
@@ -63,7 +64,6 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
                     innerContext = null;
                     // intentional fall-through
                 case BACKOFF:
-                    errorTracker.onError(now);
                     break;
                 default:
                     throw new IllegalStateException("Unknown outcome: " + outcome);

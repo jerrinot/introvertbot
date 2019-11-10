@@ -10,11 +10,11 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-final class SourceContext {
+final class DarknetContext {
     private final URL url;
     private BufferedReader reader;
 
-    public SourceContext(String host, int port) throws MalformedURLException {
+    public DarknetContext(String host, int port) throws MalformedURLException {
         this.url = new URL("http://" + host + ":" + port);
     }
 
@@ -22,6 +22,10 @@ final class SourceContext {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         InputStream inputStream = conn.getInputStream();
         return new BufferedReader(new InputStreamReader(inputStream));
+    }
+
+    public long getTimeout() {
+        return 60_000;
     }
 
     void fill(SourceBuilder.TimestampedSourceBuffer<String> buffer) throws IOException {
