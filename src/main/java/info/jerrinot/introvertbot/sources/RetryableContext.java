@@ -48,15 +48,10 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
             return;
         }
         try {
-            if (innerContext == null) {
-                innerContext = createFn.apply(processorContext);
-                if (storedSnapshot != null) {
-                    restoreSnapshotFn.accept(innerContext, storedSnapshot);
-                }
-            }
+            ensureContextExists();
             innerFillBufferFn.accept(innerContext, buffer);
             storedSnapshot = null;
-            errorTracker.onRecovery();
+            errorTracker.onSuccess();
         } catch (Throwable e) {
             long errorDurationMillis = NANOSECONDS.toMillis(errorTracker.getErrorDurationNanos(now));
             ErrorOutcome outcome = errorFn.apply(innerContext, e, errorDurationMillis);
@@ -64,7 +59,7 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
                 case PROPAGATE_ERROR:
                     throw e;
                 case RECREATE_CONTEXT:
-                    saveSnapshot();
+                    snapshotContext();
                     innerContext = null;
                     // intentional fall-through
                 case BACKOFF:
@@ -76,7 +71,16 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
         }
     }
 
-    private void saveSnapshot() {
+    private void ensureContextExists() {
+        if (innerContext == null) {
+            innerContext = createFn.apply(processorContext);
+            if (storedSnapshot != null) {
+                restoreSnapshotFn.accept(innerContext, storedSnapshot);
+            }
+        }
+    }
+
+    private void snapshotContext() {
         SNAPSHOT_TYPE singleSnapshotItem = null;
         if (innerContext != null) {
             singleSnapshotItem = createSnapshotFn.apply(innerContext);

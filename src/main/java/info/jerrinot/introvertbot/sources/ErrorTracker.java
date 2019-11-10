@@ -9,10 +9,10 @@ public final class ErrorTracker {
     private long firstErrorTimestamp;
 
     public boolean shouldBackoff(long now) {
-        return lastErrorTimestamp != 0 || now < lastErrorTimestamp + BACKOFF_NANOS;
+        return lastErrorTimestamp != 0 && now < lastErrorTimestamp + BACKOFF_NANOS;
     }
 
-    public void onRecovery() {
+    public void onSuccess() {
         lastErrorTimestamp = 0;
         firstErrorTimestamp = 0;
     }
