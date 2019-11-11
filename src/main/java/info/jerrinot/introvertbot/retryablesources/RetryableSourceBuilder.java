@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package info.jerrinot.introvertbot.sources;
+package info.jerrinot.introvertbot.retryablesources;
 
 import com.hazelcast.jet.config.JobConfig;
 import com.hazelcast.jet.config.ProcessingGuarantee;
@@ -30,7 +30,7 @@ import com.hazelcast.jet.pipeline.BatchSource;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.util.Preconditions;
-import info.jerrinot.introvertbot.sources.internal.RetryableContext;
+import info.jerrinot.introvertbot.retryablesources.internal.RetryableContext;
 
 import javax.annotation.Nonnull;
 import java.util.List;

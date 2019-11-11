@@ -1,14 +1,13 @@
-package info.jerrinot.introvertbot.sources;
+package info.jerrinot.introvertbot.retryablesources;
 
 import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.function.PredicateEx;
-import com.hazelcast.jet.function.SupplierEx;
 import com.hazelcast.jet.function.TriFunction;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.hazelcast.jet.function.PredicateEx.alwaysTrue;
-import static info.jerrinot.introvertbot.sources.ErrorOutcome.PROPAGATE_ERROR;
+import static info.jerrinot.introvertbot.retryablesources.ErrorOutcome.PROPAGATE_ERROR;
 
 public final class ErrorHandlers {
     private static final TriFunction<?, Throwable, Long, ErrorOutcome> ALWAYS_PROPAGATE = (c, t, l) -> PROPAGATE_ERROR;

@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.sources.internal;
+package info.jerrinot.introvertbot.retryablesources.internal;
 
 import com.hazelcast.jet.core.Processor;
 import com.hazelcast.jet.function.BiConsumerEx;
@@ -6,7 +6,7 @@ import com.hazelcast.jet.function.ConsumerEx;
 import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.function.TriFunction;
 import com.hazelcast.jet.pipeline.SourceBuilder;
-import info.jerrinot.introvertbot.sources.ErrorOutcome;
+import info.jerrinot.introvertbot.retryablesources.ErrorOutcome;
 
 import java.io.Serializable;
 import java.util.List;

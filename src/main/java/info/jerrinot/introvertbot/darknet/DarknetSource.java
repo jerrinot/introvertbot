@@ -4,14 +4,13 @@ import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.jet.pipeline.StreamStage;
 import info.jerrinot.introvertbot.Frame;
-import info.jerrinot.introvertbot.sources.RetryableSourceBuilder;
+import info.jerrinot.introvertbot.retryablesources.RetryableSourceBuilder;
 
 import java.io.IOException;
 
-import static info.jerrinot.introvertbot.sources.ErrorHandlers.allowOnly;
-import static info.jerrinot.introvertbot.sources.ErrorHandlers.configuredTimeout;
-import static info.jerrinot.introvertbot.sources.ErrorHandlers.fixedTimeoutAndFilter;
-import static info.jerrinot.introvertbot.sources.ErrorOutcome.RECREATE_CONTEXT;
+import static info.jerrinot.introvertbot.retryablesources.ErrorHandlers.allowOnly;
+import static info.jerrinot.introvertbot.retryablesources.ErrorHandlers.fixedTimeoutAndFilter;
+import static info.jerrinot.introvertbot.retryablesources.ErrorOutcome.RECREATE_CONTEXT;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 public final class DarknetSource {

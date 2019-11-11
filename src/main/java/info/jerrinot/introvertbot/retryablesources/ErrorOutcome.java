@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.sources;
+package info.jerrinot.introvertbot.retryablesources;
 
 /**
  * Result of error handling function.
