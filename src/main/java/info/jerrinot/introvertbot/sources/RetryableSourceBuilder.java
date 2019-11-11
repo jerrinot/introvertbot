@@ -554,7 +554,7 @@ public final class RetryableSourceBuilder<C> {
         }
 
         @Nonnull
-        public TimestampedStream<T> errorFn(@Nonnull TriFunction<? super C, Throwable, Long, ErrorOutcome> errorFn) {
+        public TimestampedStream<T> handleExceptionFn(@Nonnull TriFunction<? super C, Throwable, Long, ErrorOutcome> errorFn) {
             this.errorFn = errorFn;
             return this;
         }

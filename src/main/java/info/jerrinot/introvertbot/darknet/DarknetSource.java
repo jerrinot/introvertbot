@@ -9,6 +9,7 @@ import info.jerrinot.introvertbot.sources.RetryableSourceBuilder;
 import java.io.IOException;
 
 import static info.jerrinot.introvertbot.sources.ErrorHandlers.allowOnly;
+import static info.jerrinot.introvertbot.sources.ErrorHandlers.configuredTimeout;
 import static info.jerrinot.introvertbot.sources.ErrorHandlers.fixedTimeoutAndFilter;
 import static info.jerrinot.introvertbot.sources.ErrorOutcome.RECREATE_CONTEXT;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -21,8 +22,8 @@ public final class DarknetSource {
         return RetryableSourceBuilder.timestampedStream(srcName, context -> new DarknetContext(host, port))
                 .fillBufferFn(DarknetContext::fill)
                 .destroyFn(DarknetContext::destroy)
-                .errorFn(fixedTimeoutAndFilter(RECREATE_CONTEXT, 1, MINUTES, allowOnly(IOException.class)))
-//                .errorFn(configuredTimeout(RECREATE_CONTEXT, DarknetContext::getTimeout))
+                .handleExceptionFn(fixedTimeoutAndFilter(RECREATE_CONTEXT, 1, MINUTES, allowOnly(IOException.class)))
+//                .handleExceptionFn(configuredTimeout(RECREATE_CONTEXT, DarknetContext::getTimeout))
                 .build();
     }
 
