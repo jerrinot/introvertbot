@@ -596,8 +596,16 @@ public final class RetryableSourceBuilder<C> {
 
             return new StreamSourceTransform<>(
                     name,
-                    eventTimePolicy -> convenientTimestampedSourceP(c -> new RetryableContext<>(c, createFn, fillBufferFn, destroyFn, createSnapshotFn, restoreSnapshotFn, errorFn),
-                            RetryableContext::fill, eventTimePolicy, RetryableContext::createSnapshot, RetryableContext::restoreSnapshot, RetryableContext::destroy, preferredLocalParallelism),
+                    eventTimePolicy -> convenientTimestampedSourceP(
+                            c -> new RetryableContext<>(
+                                    c, createFn, fillBufferFn, destroyFn, createSnapshotFn,
+                                    restoreSnapshotFn, errorFn),
+                            (BiConsumerEx<RetryableContext<C, T, Object>, SourceBuilder.TimestampedSourceBuffer<T>>) RetryableContext::fill,
+                            eventTimePolicy,
+                            RetryableContext::createSnapshot,
+                            RetryableContext::restoreSnapshot,
+                            RetryableContext::destroy,
+                            preferredLocalParallelism),
                     true, true);
         }
     }

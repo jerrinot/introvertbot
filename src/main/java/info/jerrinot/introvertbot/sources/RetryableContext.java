@@ -42,7 +42,7 @@ public final class RetryableContext<INNER_CONTEXT_TYPE, ITEM_TYPE, SNAPSHOT_TYPE
         this.errorTracker = new ErrorTracker();
     }
 
-    public <T extends SourceBuilder.TimestampedSourceBuffer<ITEM_TYPE>> void fill(T buffer) {
+    public void fill(SourceBuilder.TimestampedSourceBuffer<ITEM_TYPE> buffer) {
         long now = System.nanoTime();
         if (errorTracker.shouldBackoff(now)) {
             return;
