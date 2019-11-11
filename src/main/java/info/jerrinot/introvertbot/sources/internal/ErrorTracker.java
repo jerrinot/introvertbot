@@ -1,4 +1,4 @@
-package info.jerrinot.introvertbot.sources;
+package info.jerrinot.introvertbot.sources.internal;
 
 import static java.lang.Math.min;
 

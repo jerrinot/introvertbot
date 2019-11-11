@@ -21,7 +21,6 @@ import com.hazelcast.jet.config.ProcessingGuarantee;
 import com.hazelcast.jet.core.Processor;
 import com.hazelcast.jet.core.Processor.Context;
 import com.hazelcast.jet.function.BiConsumerEx;
-import com.hazelcast.jet.function.BiFunctionEx;
 import com.hazelcast.jet.function.ConsumerEx;
 import com.hazelcast.jet.function.FunctionEx;
 import com.hazelcast.jet.function.TriFunction;
@@ -31,6 +30,7 @@ import com.hazelcast.jet.pipeline.BatchSource;
 import com.hazelcast.jet.pipeline.SourceBuilder;
 import com.hazelcast.jet.pipeline.StreamSource;
 import com.hazelcast.util.Preconditions;
+import info.jerrinot.introvertbot.sources.internal.RetryableContext;
 
 import javax.annotation.Nonnull;
 import java.util.List;
