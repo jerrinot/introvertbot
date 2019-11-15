@@ -22,7 +22,6 @@ public final class DarknetSource {
                 .fillBufferFn(DarknetContext::fill)
                 .destroyFn(DarknetContext::destroy)
                 .handleExceptionFn(fixedTimeoutAndFilter(RECREATE_CONTEXT, 1, MINUTES, allowOnly(IOException.class)))
-//                .handleExceptionFn(configuredTimeout(RECREATE_CONTEXT, DarknetContext::getTimeout))
                 .build();
     }
 
