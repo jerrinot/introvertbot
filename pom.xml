@@ -36,13 +36,11 @@
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.openweathermap.java-api/api-core -->
-<!--        <dependency>-->
-<!--            <groupId>org.openweathermap.java-api</groupId>-->
-<!--            <artifactId>api-core</artifactId>-->
-<!--            <version>1.2.3</version>-->
-<!--        </dependency>-->
-
-
+        <dependency>
+            <groupId>org.openweathermap.java-api</groupId>
+            <artifactId>api-core</artifactId>
+            <version>1.2.3</version>
+        </dependency>
 
     </dependencies>
 
@@ -80,4 +78,15 @@
             </plugin>
         </plugins>
     </build>
+
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>bintray</name>
+            <url>http://jcenter.bintray.com</url>
+        </repository>
+    </repositories>
 </project>
