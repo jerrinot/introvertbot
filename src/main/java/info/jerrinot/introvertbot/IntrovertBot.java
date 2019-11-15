@@ -6,6 +6,8 @@ import com.hazelcast.jet.Job;
 import com.hazelcast.jet.config.JetConfig;
 import com.hazelcast.jet.datamodel.WindowResult;
 import com.hazelcast.jet.pipeline.Pipeline;
+import com.hazelcast.jet.pipeline.Sink;
+import com.hazelcast.jet.pipeline.Sinks;
 import info.jerrinot.introvertbot.darknet.DarknetSource;
 import okhttp3.OkHttpClient;
 import org.influxdb.InfluxDBFactory;
@@ -35,6 +37,8 @@ public class IntrovertBot {
     private static final String INFLUXDB_RETENTION_POLICY = "trial";
     private static final int INFLUXDB_TIMEOUT_SECONDS = 60;
 
+    private static final boolean SEND_TO_INFLUX = false;
+
     public static void main(String[] args) throws Exception {
         if (INFLUXDB_PASSWORD == null || INFLUXDB_PASSWORD.isEmpty()) {
             throw new IllegalArgumentException("Property '" + INFLUXDB_PASSWORD_PROPNAME +"' is not set to InfluxDB password");
@@ -53,23 +57,30 @@ public class IntrovertBot {
                         .time(System.currentTimeMillis(), MILLISECONDS)
                         .tag("tag", "count")
                         .build())
-                .drainTo(influxDb("influx-sink", () -> {
-                            OkHttpClient.Builder clientBuilder = new OkHttpClient().newBuilder()
-                                    .connectTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS)
-                                    .readTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS)
-                                    .writeTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS);
-                            return InfluxDBFactory.connect(INFLUXDB_URL, INFLUXDB_USERNAME, INFLUXDB_PASSWORD, clientBuilder)
-                                    .setDatabase(INFLUXDB_DATABASE)
-                                    .setLogLevel(FULL)
-                                    .enableBatch(DEFAULTS.exceptionHandler(
-                                            (points, throwable) -> rethrow(throwable)))
-                                    .setRetentionPolicy(INFLUXDB_RETENTION_POLICY);
-                        }));
+                .drainTo(createSink());
 
         JetConfig jetConfig = new JetConfig();
         jetConfig.getHazelcastConfig().getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         JetInstance jet1 = Jet.newJetInstance(jetConfig);
         Job job = jet1.newJob(pipeline);
         job.join();
+    }
+
+    private static Sink<Point> createSink() {
+        if (!SEND_TO_INFLUX) {
+            return Sinks.logger();
+        }
+        return influxDb("influx-sink", () -> {
+                    OkHttpClient.Builder clientBuilder = new OkHttpClient().newBuilder()
+                            .connectTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS)
+                            .readTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS)
+                            .writeTimeout(INFLUXDB_TIMEOUT_SECONDS, SECONDS);
+                    return InfluxDBFactory.connect(INFLUXDB_URL, INFLUXDB_USERNAME, INFLUXDB_PASSWORD, clientBuilder)
+                            .setDatabase(INFLUXDB_DATABASE)
+                            .setLogLevel(FULL)
+                            .enableBatch(DEFAULTS.exceptionHandler(
+                                    (points, throwable) -> rethrow(throwable)))
+                            .setRetentionPolicy(INFLUXDB_RETENTION_POLICY);
+                });
     }
 }
